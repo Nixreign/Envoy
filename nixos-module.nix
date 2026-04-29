@@ -1,6 +1,7 @@
 { envoyLib }:
 {
   config,
+  self,
   lib,
   pkgs,
   ...
@@ -34,11 +35,11 @@ in
 
     outputDir = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      default = null;
-      example = lib.literalExpression "./envoy";
+      default = self + "/envoy";
+      example = lib.literalExpression ''self + "/envoy"'';
       description = ''
         Path to the directory where `nvfetcher` writes `generated.nix` and
-        `generated.json` — usually `./envoy` from the consuming flake.
+        `generated.json` — usually `self + "/envoy"` from the consuming flake.
         The module reads `${"\${outputDir}"}/generated.nix` to build the
         package set, and `write-sources` writes back to the same dir.
         If null or the file doesn't exist, the package set is empty
@@ -49,6 +50,7 @@ in
     package = lib.mkOption {
       type = lib.types.attrsOf lib.types.anything;
       readOnly = true;
+      visible = false;
       description = ''
         The resolved nvfetcher package set, equivalent to
         `pkgs.callPackage ./generated.nix { }`. Consumers decide how to
