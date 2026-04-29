@@ -7,9 +7,10 @@
 }:
 let
   cfg = config.envoy;
+  generatedPath = cfg.outputDir + "/generated.nix";
   generated =
-    if cfg.generatedPath != null && builtins.pathExists cfg.generatedPath then
-      import cfg.generatedPath
+    if cfg.outputDir != null && builtins.pathExists generatedPath then
+      import generatedPath
     else
       (_: { });
 in
@@ -32,22 +33,16 @@ in
     };
 
     outputDir = lib.mkOption {
-      type = lib.types.str;
-      default = "envoy";
-      description = ''
-        Directory (relative to the consuming flake) where nvfetcher writes
-        `generated.nix` and `generated.json`.
-      '';
-    };
-
-    generatedPath = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default = null;
+      example = lib.literalExpression "./envoy";
       description = ''
-        Path to the `generated.nix` file produced by `nvfetcher`. Usually
-        `./envoy/generated.nix` from the consuming flake. If null or
-        missing on disk, the package set is empty (useful before the first
-        `write-sources` run).
+        Path to the directory where `nvfetcher` writes `generated.nix` and
+        `generated.json` — usually `./envoy` from the consuming flake.
+        The module reads `${"\${outputDir}"}/generated.nix` to build the
+        package set, and `write-sources` writes back to the same dir.
+        If null or the file doesn't exist, the package set is empty
+        (useful before the first `write-sources` run).
       '';
     };
 

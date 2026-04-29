@@ -6,6 +6,10 @@
 }:
 let
   lib = pkgs.lib;
+  # Accept a path (e.g. `./envoy`) or a string ("envoy"). nvfetcher's `-o`
+  # is interpreted relative to cwd at runtime, so we need the *name*, not
+  # an eval-time store path.
+  outputDirName = if lib.isPath outputDir then baseNameOf (toString outputDir) else outputDir;
   evaluated = envoyLib.evalSources sources;
   processedSources = lib.mapAttrs (_: envoyLib.stripInternal) evaluated;
   tomlFile = (pkgs.formats.toml { }).generate "nvfetcher.toml" processedSources;
@@ -39,6 +43,6 @@ pkgs.writeShellApplication {
       exit 0
     fi
     regex="^($(echo "$matched" | paste -sd'|' -))$"
-    nvfetcher -c ${tomlFile} -o ${lib.escapeShellArg outputDir} -f "$regex"
+    nvfetcher -c ${tomlFile} -o ${lib.escapeShellArg outputDirName} -f "$regex"
   '';
 }

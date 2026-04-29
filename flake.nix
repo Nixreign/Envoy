@@ -28,15 +28,18 @@
           };
 
         # Convenience bundle: returns both the resolved package set and
-        # the `write-sources` app for a given flake.
+        # the `write-sources` app for a given flake. `outputDir` may be a
+        # path (e.g. `./envoy`) — the package set is read from
+        # `${outputDir}/generated.nix`, and the script writes back there.
         mkEnvoy =
           {
             pkgs,
             sources,
-            generatedPath ? null,
             outputDir ? "envoy",
           }:
           let
+            generatedPath =
+              if nixpkgs.lib.isPath outputDir then outputDir + "/generated.nix" else null;
             generated =
               if generatedPath != null && builtins.pathExists generatedPath then
                 import generatedPath
