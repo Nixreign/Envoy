@@ -51,13 +51,12 @@ in
       readOnly = true;
       description = ''
         The resolved nvfetcher package set, equivalent to
-        `pkgs.callPackage ./generated.nix { }`.
+        `pkgs.callPackage ./generated.nix { }`. Consumers decide how to
+        expose it — e.g. `_module.args.envoy = config.envoy.package;` or
+        passed explicitly to whichever modules need it.
       '';
     };
   };
 
-  config = {
-    envoy.package = pkgs.callPackage generated { };
-    _module.args.envoy = cfg.package;
-  };
+  config.envoy.package = pkgs.callPackage generated { };
 }
