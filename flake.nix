@@ -38,8 +38,7 @@
             outputDir ? "envoy",
           }:
           let
-            generatedPath =
-              if nixpkgs.lib.isPath outputDir then outputDir + "/generated.nix" else null;
+            generatedPath = if nixpkgs.lib.isPath outputDir then outputDir + "/generated.nix" else null;
             generated =
               if generatedPath != null && builtins.pathExists generatedPath then
                 import generatedPath
@@ -52,7 +51,7 @@
           };
       };
 
-      nixosModules.default = import ./nixos-module.nix { inherit envoyLib; };
-      nixosModules.envoy = self.nixosModules.default;
+      flakeModules.default = ./flake-module.nix;
+      flakeModules.envoy = self.flakeModules.default;
     };
 }
