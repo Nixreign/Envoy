@@ -51,7 +51,7 @@
           };
       };
 
-      flakeModules.default = ./flake-module.nix;
+      flakeModules.default = import ./flake-module.nix { inherit nixpkgs; };
       flakeModules.envoy = self.flakeModules.default;
     };
 }

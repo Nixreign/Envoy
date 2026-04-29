@@ -1,6 +1,11 @@
+{ nixpkgs }:
 topLevel@{ lib, ... }:
 let
   envoyLib = import ./lib.nix { inherit lib; };
+  # Sources are fixed-output derivations, so the system used for
+  # callPackage doesn't affect what gets fetched. Pin a system to keep
+  # `config.envoy.package` evaluable at top-level (no perSystem).
+  fetchPkgs = nixpkgs.legacyPackages.x86_64-linux;
 in
 {
   options.envoy = {
@@ -27,7 +32,29 @@ in
         `${"\${outputDir}"}/generated.nix`.
       '';
     };
+
+    package = lib.mkOption {
+      type = lib.types.lazyAttrsOf lib.types.raw;
+      readOnly = true;
+      visible = false;
+      description = ''
+        Resolved package set from `${"\${outputDir}"}/generated.nix`.
+        Access srcs via `config.envoy.package.<name>.src`.
+      '';
+    };
   };
+
+  config.envoy.package =
+    let
+      outputDir = topLevel.config.envoy.outputDir;
+      generatedPath = if lib.isPath outputDir then outputDir + "/generated.nix" else null;
+      generated =
+        if generatedPath != null && builtins.pathExists generatedPath then
+          import generatedPath
+        else
+          (_: { });
+    in
+    fetchPkgs.callPackage generated { };
 
   config.perSystem =
     { pkgs, ... }:
@@ -41,17 +68,5 @@ in
           }
         }/bin/write-sources";
       };
-
-      legacyPackages.envoy =
-        let
-          outputDir = topLevel.config.envoy.outputDir;
-          generatedPath = if lib.isPath outputDir then outputDir + "/generated.nix" else null;
-          generated =
-            if generatedPath != null && builtins.pathExists generatedPath then
-              import generatedPath
-            else
-              (_: { });
-        in
-        pkgs.callPackage generated { };
     };
 }
