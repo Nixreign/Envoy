@@ -1,0 +1,55 @@
+{
+  description = "envoy: declarative nvfetcher source definitions for Nix flakes.";
+
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+
+  outputs =
+    { self, nixpkgs }:
+    let
+      envoyLib = import ./lib.nix { inherit (nixpkgs) lib; };
+    in
+    {
+      lib = {
+        inherit (envoyLib) sourceType evalSources stripInternal;
+
+        mkWriteSources =
+          {
+            pkgs,
+            sources,
+            outputDir ? "envoy",
+          }:
+          import ./write-sources.nix {
+            inherit
+              pkgs
+              sources
+              outputDir
+              envoyLib
+              ;
+          };
+
+        # Convenience bundle: returns both the resolved package set and
+        # the `write-sources` app for a given flake.
+        mkEnvoy =
+          {
+            pkgs,
+            sources,
+            generatedPath ? null,
+            outputDir ? "envoy",
+          }:
+          let
+            generated =
+              if generatedPath != null && builtins.pathExists generatedPath then
+                import generatedPath
+              else
+                (_: { });
+          in
+          {
+            packages = pkgs.callPackage generated { };
+            writeSources = self.lib.mkWriteSources { inherit pkgs sources outputDir; };
+          };
+      };
+
+      nixosModules.default = import ./nixos-module.nix { inherit envoyLib; };
+      nixosModules.envoy = self.nixosModules.default;
+    };
+}
